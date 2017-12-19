@@ -45,7 +45,7 @@ defmodule AOC.Day18 do
   end
 
   def perform_instruction(:snd, x, memory) do
-    Map.put(memory, :freq, x)
+    Map.put(memory, :freq, Map.get(memory, x))
   end
 
   def perform_instruction(:set, x, y, memory) do
