@@ -13,7 +13,9 @@ defmodule AOC.Day18 do
   """
 
   # a..p for registers, :freq for last freq, :rcv for last recovered freq when, :ip for instruction pointer
-  @init_memory (0..15) |> Enum.map(& {<<&1 + ?a>> |> String.to_atom, 0}) |> Enum.into(%{freq: nil, rcv: nil, ip: -1, state: :run})
+  @init_memory (0..15)
+    |> Enum.map(& {<<&1 + ?a>> |> String.to_atom, 0})
+    |> Enum.into(%{freq: nil, rcv: nil, ip: -1, state: :run})
 
   def solve do
     read_input()
@@ -30,51 +32,39 @@ defmodule AOC.Day18 do
 
   # PERFORM INSTRUCTIONS
 
-  def perform_instruction({:snd, x}, memory) when is_atom(x) do
-    Map.put(memory, :freq, Map.get(memory, x))
+  def perform_instruction({op, x}, memory) do
+    perform_instruction(op, x, memory)
   end
-  def perform_instruction({:snd, x}, memory) do
+
+  def perform_instruction({op, x, y}, memory) when is_atom(y) do
+    perform_instruction(op, x, Map.get(memory, y), memory)
+  end
+
+  def perform_instruction({op, x, y}, memory) do
+    perform_instruction(op, x, y, memory)
+  end
+
+  def perform_instruction(:snd, x, memory) do
     Map.put(memory, :freq, x)
   end
 
-  def perform_instruction({:set, x, y}, memory) when is_atom(y) do
-    Map.put(memory, x, Map.get(memory, y))
-  end
-  def perform_instruction({:set, x, y}, memory) do
+  def perform_instruction(:set, x, y, memory) do
     Map.put(memory, x, y)
   end
 
-  def perform_instruction({:add, x, y}, memory) when is_atom(y) do
-    Map.update!(memory, x, & &1 + Map.get(memory, y))
-  end
-  def perform_instruction({:add, x, y}, memory) do
+  def perform_instruction(:add, x, y, memory) do
     Map.update!(memory, x, & &1 + y)
   end
 
-  def perform_instruction({:mul, x, y}, memory) when is_atom(y) do
-    Map.update!(memory, x, & &1 * Map.get(memory, y))
-  end
-  def perform_instruction({:mul, x, y}, memory) do
+  def perform_instruction(:mul, x, y, memory) do
     Map.update!(memory, x, & &1 * y)
   end
 
-  def perform_instruction({:mod, x, y}, memory) when is_atom(y) do
-    Map.update!(memory, x, & rem(&1, Map.get(memory, y)))
-  end
-  def perform_instruction({:mod, x, y}, memory) do
+  def perform_instruction(:mod, x, y, memory) do
     Map.update!(memory, x, & rem(&1, y))
   end
 
-  def perform_instruction({:rcv, x}, memory) when is_atom(x) do
-    if Map.get(memory, x) > 0 do
-      memory
-      |> Map.put(:rcv, Map.get(memory, :freq))
-      |> Map.put(:state, :halt)
-    else
-      memory
-    end
-  end
-  def perform_instruction({:rcv, x}, memory) do
+  def perform_instruction(:rcv, x, memory) do
     if x > 0 do
       memory
       |> Map.put(:rcv, Map.get(memory, :freq))
@@ -84,14 +74,7 @@ defmodule AOC.Day18 do
     end
   end
 
-  def perform_instruction({:jgz, x, y}, memory) when is_atom(y) do
-    if Map.get(memory, x) > 0 do
-      Map.update!(memory, :ip, & &1 + Map.get(memory, y) - 1)
-    else
-      memory
-    end
-  end
-  def perform_instruction({:jgz, x, y}, memory) do
+  def perform_instruction(:jgz, x, y, memory) do
     if Map.get(memory, x) > 0 do
       Map.update!(memory, :ip, & &1 + y - 1)
     else

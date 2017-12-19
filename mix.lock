@@ -1,0 +1,2 @@
+%{"mogrify": {:hex, :mogrify, "0.5.6", "8ba04d4204f7149fac4ca302ca37aeb1550074958bed9fa892fdf6cd46806082", [], [], "hexpm"},
+  "mogrify_draw": {:hex, :mogrify_draw, "0.1.1", "858e0eb209bad3d408cfce4845e49e049395f2ae80c0802ecf0b0b8c1b954207", [], [{:mogrify, "~> 0.5.4", [hex: :mogrify, repo: "hexpm", optional: false]}], "hexpm"}}

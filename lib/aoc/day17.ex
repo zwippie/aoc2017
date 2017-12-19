@@ -19,19 +19,18 @@ defmodule AOC.Day17b do
   @stop_at 50_000_000
 
   def solve do
-    next_state([0], 0, 0)
+    next_state(0, 0, 0)
   end
 
-  def next_state(state, _, @stop_at) do
-    Enum.at(state, Enum.find_index(state, & &1 == 0))
-  end
-
-  def next_state(state, pos, count) do
-    if rem(count, 1_000) == 0 do
-      IO.inspect Enum.at(state, Enum.find_index(state, & &1 == 0) + 1)
+  def next_state(next, _pos, @stop_at), do: next
+  def next_state(next, pos, count) do
+    count = count + 1
+    circular_pos = rem(pos + @step_size, count) + 1
+    cond do
+      circular_pos == 1 ->
+        next_state(count, circular_pos, count)
+      true ->
+        next_state(next, circular_pos, count)
     end
-    circular_pos = rem(pos + @step_size, length(state))
-    state = List.insert_at(state, circular_pos + 1, count + 1)
-    next_state(state, circular_pos + 1, count + 1)
   end
 end
