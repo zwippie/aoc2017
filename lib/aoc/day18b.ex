@@ -18,92 +18,85 @@ defmodule AOC.Day18b do
     Values are received in the order they are sent.
   """
 
-  # a..p for registers, :freq for last freq, :rcv for last recovered freq when, :ip for instruction pointer
+  # a..p for registers, :ip for instruction pointern, state: run, halt (done)
   @init_memory (0..15)
     |> Enum.map(& {<<&1 + ?a>> |> String.to_atom, 0})
-    |> Enum.into(%{ip: -1, state: :run, no_sends: 0, queue: []})
+    |> Enum.into(%{ip: -1, state: :run, send_count: 0, other_pid: nil, original_p: 0})
 
-  # def solve do
-  #   memory_a = @init_memory
-  #   memory_b = %{@init_memory | p: 1}
-  #   read_input()
-  #   |> run_program(memory_a, memory_b)
-  # end
+  def solve do
+    program = read_input()
 
-  # def run_program(_, %{state: :wait}, %{state: :wait, no_sends: no_sends}), do: no_sends
-  # def run_program(program, memory_a, memory_b) do
-  #   memory = Map.update!(memory, :ip, & &1 + 1)
-  #   instruction = Enum.at(program, Map.get(memory, :ip))
-  #   run_program(program, perform_instruction(instruction, memory))
-  # end
+    pid_a = spawn_link(__MODULE__, :start, [program, @init_memory])
+    pid_b = spawn_link(__MODULE__, :start, [program, %{@init_memory | p: 1, original_p: 1}])
+
+    send pid_a, pid_b
+    send pid_b, pid_a
+  end
+
+  def start(program, memory) do
+    memory = receive do
+      other_pid -> %{memory | other_pid: other_pid}
+    end
+    run_program(program, memory)
+  end
+
+  def run_program(_, %{state: :halt} = memory) do
+    IO.puts "Program #{Map.get(memory, :original_p)} is done, send count: #{Map.get(memory, :send_count)}"
+    Map.get(memory, {:original_p, :send_count})
+  end
+
+  def run_program(program, memory) do
+    memory = Map.update!(memory, :ip, & &1 + 1)
+    instruction = Enum.at(program, Map.get(memory, :ip))
+    run_program(program, perform_instruction(instruction, memory))
+  end
 
 
   # PERFORM INSTRUCTIONS
 
-  # def perform_instruction(bank, )
-
-  def perform_instruction({:snd, x}, memory) when is_atom(x) do
-    Map.put(memory, :freq, Map.get(memory, x))
-  end
-  def perform_instruction({:snd, x}, memory) do
-    Map.put(memory, :freq, x)
+  def perform_instruction({op, x}, memory) do
+    perform_instruction(op, x, memory)
   end
 
-  def perform_instruction({:set, x, y}, memory) when is_atom(y) do
-    Map.put(memory, x, Map.get(memory, y))
+  def perform_instruction({op, x, y}, memory) when is_atom(y) do
+    perform_instruction(op, x, Map.get(memory, y), memory)
   end
-  def perform_instruction({:set, x, y}, memory) do
+
+  def perform_instruction({op, x, y}, memory) do
+    perform_instruction(op, x, y, memory)
+  end
+
+  def perform_instruction(:snd, x, memory) do
+    send(Map.get(memory, :other_pid), Map.get(memory, x))
+    Map.update!(memory, :send_count, & &1 + 1)
+  end
+
+  def perform_instruction(:rcv, x, memory) do
+    receive do
+      val ->
+        Map.put(memory, x, val)
+    after
+      5000 -> Map.put(memory, :state, :halt)
+    end
+  end
+
+  def perform_instruction(:set, x, y, memory) do
     Map.put(memory, x, y)
   end
 
-  def perform_instruction({:add, x, y}, memory) when is_atom(y) do
-    Map.update!(memory, x, & &1 + Map.get(memory, y))
-  end
-  def perform_instruction({:add, x, y}, memory) do
+  def perform_instruction(:add, x, y, memory) do
     Map.update!(memory, x, & &1 + y)
   end
 
-  def perform_instruction({:mul, x, y}, memory) when is_atom(y) do
-    Map.update!(memory, x, & &1 * Map.get(memory, y))
-  end
-  def perform_instruction({:mul, x, y}, memory) do
+  def perform_instruction(:mul, x, y, memory) do
     Map.update!(memory, x, & &1 * y)
   end
 
-  def perform_instruction({:mod, x, y}, memory) when is_atom(y) do
-    Map.update!(memory, x, & rem(&1, Map.get(memory, y)))
-  end
-  def perform_instruction({:mod, x, y}, memory) do
+  def perform_instruction(:mod, x, y, memory) do
     Map.update!(memory, x, & rem(&1, y))
   end
 
-  def perform_instruction({:rcv, x}, memory) when is_atom(x) do
-    if Map.get(memory, x) > 0 do
-      memory
-      |> Map.put(:rcv, Map.get(memory, :freq))
-      |> Map.put(:state, :halt)
-    else
-      memory
-    end
-  end
-  def perform_instruction({:rcv, x}, memory) do
-    if x > 0 do
-      memory
-      |> Map.put(:rcv, Map.get(memory, :freq))
-      |> Map.put(:state, :halt)
-    else
-      memory
-    end
-  end
-
-  def perform_instruction({:jgz, x, y}, memory) when is_atom(y) do
-    if Map.get(memory, x) > 0 do
-      Map.update!(memory, :ip, & &1 + Map.get(memory, y) - 1)
-    else
-      memory
-    end
-  end
-  def perform_instruction({:jgz, x, y}, memory) do
+  def perform_instruction(:jgz, x, y, memory) do
     if Map.get(memory, x) > 0 do
       Map.update!(memory, :ip, & &1 + y - 1)
     else
