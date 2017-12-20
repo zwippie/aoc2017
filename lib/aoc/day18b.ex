@@ -78,10 +78,9 @@ defmodule AOC.Day18b do
 
   def perform_instruction(:rcv, x, memory) do
     receive do
-      val ->
-        Map.put(memory, x, val)
+      val -> Map.put(memory, x, val)
     after
-      5000 -> Map.put(memory, :state, :halt)
+      100 -> Map.put(memory, :state, :halt)
     end
   end
 
