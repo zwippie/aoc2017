@@ -18,7 +18,7 @@ defmodule AOC.Day18b do
     Values are received in the order they are sent.
   """
 
-  # a..p for registers, :ip for instruction pointern, state: run, halt (done)
+  # a..p for registers, :ip for instruction pointer, state: run, halt (done)
   @init_memory (0..15)
     |> Enum.map(& {<<&1 + ?a>> |> String.to_atom, 0})
     |> Enum.into(%{ip: -1, state: :run, send_count: 0, other_pid: nil, original_p: 0})
@@ -31,6 +31,12 @@ defmodule AOC.Day18b do
 
     send pid_a, pid_b
     send pid_b, pid_a
+
+    # Wait for program b to finish
+    ref_b = Process.monitor(pid_b)
+    receive do
+      {:DOWN, ^ref_b, _, _, _} -> :ok
+    end
   end
 
   def start(program, memory) do
@@ -42,7 +48,6 @@ defmodule AOC.Day18b do
 
   def run_program(_, %{state: :halt} = memory) do
     IO.puts "Program #{Map.get(memory, :original_p)} is done, send count: #{Map.get(memory, :send_count)}"
-    Map.get(memory, {:original_p, :send_count})
   end
 
   def run_program(program, memory) do
