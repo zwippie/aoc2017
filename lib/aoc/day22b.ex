@@ -120,13 +120,13 @@ defmodule AOC.Day22b do
     Enum.map(matrix, & &1 ++ [:clean])
   end
 
+  # INPUT HANDLING
+
   def read_input do
     File.read!("priv/input/day22.txt")
     |> String.split(~r/\n/, trim: true)
     |> Enum.map(&parse_line/1)
   end
-
-  # INPUT HANDLING
 
   def parse_line(line) do
     line
