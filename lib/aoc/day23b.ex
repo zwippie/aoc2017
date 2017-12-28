@@ -1,5 +1,5 @@
 defmodule AOC.Day23b do
-  @break_at 20_000_000
+  @break_at 11000
 
   @init_memory (0..7)
     |> Enum.map(& {<<&1 + ?a>> |> String.to_atom, 0})
@@ -17,9 +17,9 @@ defmodule AOC.Day23b do
   def run_program(program, memory) do
     memory = Map.update!(memory, :ip, & &1 + 1)
     instruction = Enum.at(program, Map.get(memory, :ip))
-    if rem(Map.get(memory, :counter), 1_000_000) == 0 do
-      IO.inspect({memory, instruction}, width: 200)
-    end
+    # if rem(Map.get(memory, :counter), 1_000_000) == 0 do
+      # IO.inspect({memory, instruction}, width: 200)
+    # end
     memory =
       perform_instruction(instruction, memory)
       |> Map.update!(:counter, & &1 + 1)
