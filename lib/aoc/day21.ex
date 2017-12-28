@@ -32,12 +32,12 @@ defmodule AOC.Day21 do
   end
 
   def partition(grid, size) do
-    count = div(length(grid), size)
     grid
-    |> Enum.chunk_every(count)
+    |> Enum.chunk_every(size)
     |> Enum.map(fn rows ->
       partition_rows(rows, [])
     end)
+    |> hd
   end
 
 
